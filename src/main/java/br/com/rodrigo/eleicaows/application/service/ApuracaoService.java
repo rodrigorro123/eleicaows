@@ -2,9 +2,12 @@ package br.com.rodrigo.eleicaows.application.service;
 
 import br.com.rodrigo.eleicaows.application.exception.ApiException;
 import br.com.rodrigo.eleicaows.application.model.request.VotoRequest;
+import br.com.rodrigo.eleicaows.application.model.response.ResultadoApuracaoResponse;
 
 public interface ApuracaoService {
 
-	Boolean registrarVoto(VotoRequest voto) throws ApiException;
+	String registrarVoto(VotoRequest voto) throws ApiException;
+	
+	ResultadoApuracaoResponse consultarResultadoApuracao(String nomePauta)throws ApiException;
 
 }
