@@ -24,7 +24,7 @@ import jakarta.validation.ConstraintViolationException;
 
 @RestControllerAdvice
 public class ApiExceptionHandler extends ResponseEntityExceptionHandler {
-    private final String DEFAULT_ERROR_MESSAGE = "Contacte o administrador com o código %s";
+    private static final String DEFAULT_ERROR_MESSAGE = "Contacte o administrador com o código %s";
 
     @ExceptionHandler({ApiException.class})
     public ResponseEntity<Object> handleApiException(

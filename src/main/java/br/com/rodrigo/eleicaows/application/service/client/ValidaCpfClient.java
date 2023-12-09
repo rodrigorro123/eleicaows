@@ -4,10 +4,10 @@ import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 
-@FeignClient(name = "cpfClient", url = "https://validarcpf-f68273501cba.herokuapp.com")
+@FeignClient(name = "cpfClient", url = "${application.feign.urlCpf}")
 public interface ValidaCpfClient {
-	
-	@GetMapping(path = "validarCpf/{cpf}"  )
+
+	@GetMapping(path = "validarCpf/{cpf}")
 	Boolean validarCpf(@PathVariable("cpf") String cpf);
 
 }

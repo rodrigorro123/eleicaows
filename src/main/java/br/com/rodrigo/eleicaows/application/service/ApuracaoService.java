@@ -9,5 +9,7 @@ public interface ApuracaoService {
 	String registrarVoto(VotoRequest voto) throws ApiException;
 	
 	ResultadoApuracaoResponse consultarResultadoApuracao(String nomePauta)throws ApiException;
+	
+	void enviarMsgPautaFechada() throws ApiException;
 
 }

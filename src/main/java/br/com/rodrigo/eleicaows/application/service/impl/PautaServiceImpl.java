@@ -68,4 +68,5 @@ public class PautaServiceImpl implements PautaService {
 	private PautaResponse convertToPautaResponse(Pauta pauta) {
 	    return mapper.convertValue(pauta, PautaResponse.class);
 	}
+	
 }

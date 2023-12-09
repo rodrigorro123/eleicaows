@@ -1,8 +1,7 @@
 package br.com.rodrigo.eleicaows.application.service.impl;
 
-
-
 import java.time.LocalDateTime;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
 import java.util.function.Function;
@@ -16,9 +15,11 @@ import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 
 import br.com.rodrigo.eleicaows.application.exception.ApiException;
 import br.com.rodrigo.eleicaows.application.model.AgrupamentoApuracao;
+import br.com.rodrigo.eleicaows.application.model.enums.StatusEnum;
 import br.com.rodrigo.eleicaows.application.model.request.VotoRequest;
 import br.com.rodrigo.eleicaows.application.model.response.ResultadoApuracaoResponse;
 import br.com.rodrigo.eleicaows.application.service.ApuracaoService;
+import br.com.rodrigo.eleicaows.application.service.amqp.RabbitMQSender;
 import br.com.rodrigo.eleicaows.application.service.client.ValidaCpfClient;
 import br.com.rodrigo.eleicaows.domain.entity.Apuracao;
 import br.com.rodrigo.eleicaows.domain.entity.Pauta;
@@ -35,7 +36,10 @@ public class ApuracaoServiceImpl implements ApuracaoService {
 	private final ApuracaoRepository apuracaoRepository;
 	private final PautaRepository pautaRepository;
 	private final ValidaCpfClient cpfClient;
+	private final RabbitMQSender mq;
 
+	private static final String PAUTA_INVALIDA = "PAUTA_INVALIDA";
+	
 	ObjectMapper mapper = new ObjectMapper().configure(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS, false)
 			.registerModule(new JavaTimeModule());
 
@@ -45,6 +49,7 @@ public class ApuracaoServiceImpl implements ApuracaoService {
 	@Override
 	public String registrarVoto(VotoRequest voto) throws ApiException {
 		try {
+
 			var pauta = preRequisitoVotacao(voto);
 			apuracaoRepository.save(Apuracao.builder()
 					.cpf(voto.cpf())
@@ -68,7 +73,7 @@ public class ApuracaoServiceImpl implements ApuracaoService {
 	 */
 	private Pauta preRequisitoVotacao(VotoRequest voto) throws ApiException {
 		if (Objects.isNull(voto.pauta())) {
-			throw ApiException.preconditionFailed("PAUTA_INVALIDA", "Pauta nao informada");
+			throw ApiException.preconditionFailed(PAUTA_INVALIDA, "Pauta nao informada");
 		}
 		if (Objects.isNull(voto.voto())) {
 			throw ApiException.preconditionFailed("VOTO_INVALIDO", "Tipo de voto nao informado");
@@ -91,7 +96,7 @@ public class ApuracaoServiceImpl implements ApuracaoService {
 
 		if(LocalDateTime.now().isAfter(
 									pauta.get().getDtEncerramento()) ) {
-			throw ApiException.preconditionFailed("PAUTA_INVALIDA", "Pauta Encerrada");
+			throw ApiException.preconditionFailed(PAUTA_INVALIDA, "Pauta Encerrada");
 		}
 		var apuracao = apuracaoRepository.findByCpfAndPauta(voto.cpf(), pauta.get());
 		if (apuracao.isPresent()) {
@@ -108,36 +113,66 @@ public class ApuracaoServiceImpl implements ApuracaoService {
 	 */
 	private List<Pauta> persistirPauta(String nomePauta) throws ApiException {
 		if (Objects.isNull(nomePauta)) {
-			throw ApiException.preconditionFailed("PAUTA_INVALIDA", "Pauta nao informada");
+			throw ApiException.preconditionFailed(PAUTA_INVALIDA, "Pauta nao informada");
 		}
 		List<Pauta> pautas = pautaRepository.findByNome(nomePauta);
 		if (Objects.isNull(pautas)) {
-			throw ApiException.preconditionFailed("PAUTA_INVALIDA", "Pauta nao Localizada");
+			throw ApiException.preconditionFailed(PAUTA_INVALIDA, "Pauta nao Localizada");
 		}
 		return pautas;
 	}
 	
+	/**
+	 * realizar o calculo da qtde de votos para cada pauta
+	 * @param pautas
+	 * @return
+	 * @throws ApiException
+	 */
+	private ResultadoApuracaoResponse calcularResultadoVotacao(List<Pauta> pautas) {
+		 ResultadoApuracaoResponse resultadoFinal = new ResultadoApuracaoResponse(
+	                pautas.stream()
+	                        .flatMap(pauta -> pauta.getApuracoes().stream()
+	                                .map(apuracao -> new AgrupamentoApuracao(
+	                                        apuracao.getVoto(),
+	                                        pauta.getNome(),
+	                                        pauta.getStatus(),
+	                                        pauta.getDtCriacao(),
+	                                        pauta.getDtEncerramento()
+	                                ))
+	                        )
+	                        .collect(Collectors.groupingBy(
+	                                Function.identity(), 
+	                                Collectors.counting()
+	                        ))
+	        		);
+		 return resultadoFinal;
+	}
+	
+	/**
+	 * Gera a estatistica de votos por pauta selecionada
+	 */
 	@Override
-	public ResultadoApuracaoResponse consultarResultadoApuracao(String nomePauta)throws ApiException {
-		
-        List<Pauta> pautas = persistirPauta(nomePauta);
-        
-        ResultadoApuracaoResponse resultadoFinal = new ResultadoApuracaoResponse(
-                pautas.stream()
-                        .flatMap(pauta -> pauta.getApuracoes().stream()
-                                .map(apuracao -> new AgrupamentoApuracao(
-                                        apuracao.getVoto(),
-                                        pauta.getNome(),
-                                        pauta.getStatus(),
-                                        pauta.getDtCriacao(),
-                                        pauta.getDtEncerramento()
-                                ))
-                        )
-                        .collect(Collectors.groupingBy(
-                                Function.identity(), // Agrupa por instância de ResultadoApuracao
-                                Collectors.counting()
-                        ))
-        		);
-        return resultadoFinal;
-	}	
+	public ResultadoApuracaoResponse consultarResultadoApuracao(String nomePauta) throws ApiException {
+
+		List<Pauta> pautas = persistirPauta(nomePauta);
+
+		return calcularResultadoVotacao(pautas);
+	}
+
+	/**
+	 * verifica as pautas abertas caso tenham sido expiradas, envia para a fila
+	 */
+	public void enviarMsgPautaFechada() throws ApiException {
+
+		pautaRepository.findByStatus(StatusEnum.ABERTO)
+				.stream()
+				.filter( pauta -> LocalDateTime.now().isAfter(pauta.getDtEncerramento()))
+				.forEach( pauta -> {
+					pauta.setStatus(StatusEnum.FECHADO);
+					pautaRepository.save(pauta);
+					if(!pauta.getApuracoes().isEmpty()) {// notifica apenas pautas com votos
+						mq.sendMessage(calcularResultadoVotacao(Arrays.asList(pauta)));	
+					}
+				});
+	}
 }

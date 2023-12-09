@@ -20,6 +20,7 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import lombok.Setter;
 
 @Entity
 @Table(name = "pt_pauta")
@@ -27,6 +28,7 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @Builder
 @Getter
+@Setter
 public class Pauta {
 
 	@Id
@@ -49,7 +51,7 @@ public class Pauta {
 	private LocalDateTime dtEncerramento;
 	
 	@JsonManagedReference(value="pauta-apuracao")
-	@OneToMany(cascade = CascadeType.ALL, mappedBy = "pauta", fetch = FetchType.LAZY)
+	@OneToMany(cascade = CascadeType.ALL, mappedBy = "pauta", fetch = FetchType.EAGER)
 	private List<Apuracao> apuracoes;
 	
 }
