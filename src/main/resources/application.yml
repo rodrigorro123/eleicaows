@@ -1,0 +1,12 @@
+spring:
+  datasource:
+    url: jdbc:mysql://jgzwnsy90uqxnl7v:c3uc889msc8u4hr4@lcpbq9az4jklobvq.cbetxkdyhwsb.us-east-1.rds.amazonaws.com:3306/u927qqlivo930255
+  jpa:
+    show-sql: true
+    hibernate:
+      ddl-auto: update
+
+#springdoc:
+#  swagger-ui:
+#    path: swagger-ui-custom.html
+#    operations-sorter: method 
