@@ -1,0 +1,35 @@
+application:
+  feign:
+    urlCpf: https://validarcpf-f68273501cba.herokuapp.com
+
+spring:
+  datasource:
+    url: jdbc:mysql://jgzwnsy90uqxnl7v:c3uc889msc8u4hr4@lcpbq9az4jklobvq.cbetxkdyhwsb.us-east-1.rds.amazonaws.com:3306/u927qqlivo930255
+    hikari:
+      maximum-pool-size: 10
+      minimum-idle: 5
+      idle-timeout: 30000
+      
+  jpa:
+    show-sql: true
+    hibernate:
+      ddl-auto: update
+  rabbitmq:
+    host: fish.rmq.cloudamqp.com
+    port: 5672
+    username: pkstgkcj
+    password: j_dbqjYUK275HKClr7u3Sx_SfLLn8a3B
+    virtual-host: pkstgkcj
+    template:
+      default-receive-queue: eleitoral 
+      exchange: mq_exchange 
+      routing-key: mq_routingkey 
+      
+server:
+  servlet:
+    context-path: /eleicao
+  tomcat:
+    threads:
+      max: 100
+    max-http-form-post-size: 2MB
+      
