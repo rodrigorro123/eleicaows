@@ -99,7 +99,7 @@ public class ApuracaoServiceImpl implements ApuracaoService {
 			throw ApiException.preconditionFailed(PAUTA_INVALIDA, "Pauta Encerrada");
 		}
 		var apuracao = apuracaoRepository.findByCpfAndPauta(voto.cpf(), pauta.get());
-		if (apuracao.isPresent()) {
+		if (!apuracao.isEmpty()) {
 			throw ApiException.preconditionFailed("VOTO_EFETUADO", "Voto ja efetuado");
 		}
 		return pauta.get();

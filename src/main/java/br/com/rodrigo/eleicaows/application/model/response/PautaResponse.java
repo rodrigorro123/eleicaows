@@ -8,13 +8,11 @@ import com.fasterxml.jackson.annotation.JsonFormat;
 import br.com.rodrigo.eleicaows.application.model.ApuracaoDto;
 import br.com.rodrigo.eleicaows.application.model.enums.StatusEnum;
 import lombok.AllArgsConstructor;
-import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
 @NoArgsConstructor
 @AllArgsConstructor
-@Builder
 @Getter
 public class PautaResponse {
 	

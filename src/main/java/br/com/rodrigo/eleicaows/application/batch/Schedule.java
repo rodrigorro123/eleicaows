@@ -15,6 +15,10 @@ public class Schedule {
 
 	private final ApuracaoService apuracaoService;
 
+	/**
+	 * Schedule interno executado a minuto para verificar pautas a serem fechadas e notificadas em fila 
+	 * @throws ApiException
+	 */
 	@Scheduled(cron = "0 * * * * *")
 	public void teste() throws ApiException {
 		

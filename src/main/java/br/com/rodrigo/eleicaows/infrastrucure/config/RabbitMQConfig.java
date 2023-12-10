@@ -31,7 +31,7 @@ public class RabbitMQConfig {
 	}
 
 	@Bean
-	DirectExchange exchange() {
+	DirectExchange deExchange() {
 		return new DirectExchange(nomeExchange);
 	}
 

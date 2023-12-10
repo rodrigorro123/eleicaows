@@ -28,7 +28,7 @@ public class PautaController {
 	 
 	@PostMapping(consumes = MediaType.APPLICATION_JSON_VALUE)
 	@Operation(summary = "criar uma pauta")
-	public ResponseEntity<Boolean> salvar( @RequestBody PautaRequest pauta) throws ApiException {
+	public ResponseEntity<String> salvar( @RequestBody PautaRequest pauta) throws ApiException {
 		var result = service.criarPauta(pauta);
 		return ResponseEntity.status(HttpStatus.CREATED).body(result);
 	}

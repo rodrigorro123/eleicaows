@@ -2,8 +2,8 @@ package br.com.rodrigo.eleicaows.application.service.impl;
 
 import java.time.LocalDateTime;
 import java.util.List;
-import java.util.Objects;
 
+import org.apache.logging.log4j.util.Strings;
 import org.springframework.stereotype.Service;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -29,9 +29,11 @@ public class PautaServiceImpl implements PautaService {
 	
 	ObjectMapper mapper = new ObjectMapper().configure(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS, false)
 											.registerModule(new JavaTimeModule());
-	
+	/**
+	 * cria uma pauta e determinar duracao em minutos
+	 */
 	@Override
-	public Boolean criarPauta(PautaRequest pauta) throws ApiException {
+	public String criarPauta(PautaRequest pauta) throws ApiException {
 		try {
 			pautaRepository.save( Pauta.builder()
 										.dtCriacao(LocalDateTime.now())
@@ -39,19 +41,22 @@ public class PautaServiceImpl implements PautaService {
 										.nome(pauta.nome())
 										.status(StatusEnum.ABERTO)
 									.build() );
-			return true;
+			return "Pauta salva com sucesso";
 		} catch (Exception e) {
 			log.error("Falha ao salvar pauta {}", e.getMessage());
-			return false;
+			throw ApiException.internalError("FALHA_SALVAR", "Falha ao salvar pauta");
 		}
 	}
 	
+	/**
+	 * busca pauta pelo nome
+	 */
 	@Override
 	public List<PautaResponse> buscarPauta(String nome) throws ApiException {
 
 		try {
 			List<Pauta> pautas;
-			if(Objects.nonNull(nome)) {
+			if(Strings.isNotEmpty(nome)) {
 				pautas = pautaRepository.findByNome(nome);	
 			}else {
 				pautas = pautaRepository.findAll();
@@ -65,6 +70,12 @@ public class PautaServiceImpl implements PautaService {
 			throw  ApiException.internalError("FALHA_LOCALIZAR","Falha ao buscar pauta");
 		}
 	}
+	
+	/**
+	 * convert model em dto pra retorno
+	 * @param pauta
+	 * @return
+	 */
 	private PautaResponse convertToPautaResponse(Pauta pauta) {
 	    return mapper.convertValue(pauta, PautaResponse.class);
 	}
