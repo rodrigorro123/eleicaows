@@ -24,5 +24,5 @@ A eleicaows é desenvolvido com as seguintes tecnologias:
 
 # Execução
 
-A api esta armazenada no heroku pelo site http://localhost:8080/eleicao/swagger-ui/index.html 
+A api esta armazenada no heroku pelo site https://eleicaows-f202a66b2e1b.herokuapp.com/eleicao/swagger-ui/index.html
 sendo possivel acionar o seu swagger para identificação dos metodos e parametros de entrada e saida
